@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, ToggleLeft, ToggleRight } from 'lucide-react'
 import { WriteIntent, PostCategory } from '@/lib/types'
+import { createPost } from '@/lib/db'
 
 const INTENTS: { value: WriteIntent; label: string; emoji: string; category: PostCategory }[] = [
   { value: '그냥 털어놓기', label: '그냥 털어놓기', emoji: '💭', category: '이별했어요' },
@@ -25,44 +26,57 @@ export default function WritePage() {
 
   const selectedIntent = INTENTS.find(i => i.value === intent)
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!intent || !title.trim() || !content.trim()) return
+    const profile = JSON.parse(localStorage.getItem('wecando_profile') || '{}')
     setSubmitted(true)
-    setTimeout(() => router.push('/home'), 1500)
+    try {
+      await createPost({
+        authorId: profile.id || 'anon',
+        authorNickname: profile.nickname || '익명',
+        authorLocation: '',
+        authorStatus: profile.status || '',
+        authorDays: profile.daysSinceBreakup || 0,
+        category: selectedIntent?.category || '이별했어요',
+        title: title.trim(),
+        content: content.trim(),
+        allowMessages,
+      })
+    } catch (e) { console.error(e) }
+    setTimeout(() => router.push('/home'), 1200)
   }
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-ivory flex items-center justify-center px-6">
+      <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center px-6">
         <div className="text-center fade-in">
-          <div className="w-16 h-16 rounded-full bg-warm-100 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-full bg-charcoal-100 flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">✉️</span>
           </div>
-          <h2 className="text-lg font-bold text-[#222] mb-2">이야기가 올라갔어요</h2>
-          <p className="text-sm text-[#888]">누군가가 곧 따뜻한 말을 남겨줄 거예요</p>
+          <h2 className="text-[17px] font-bold text-charcoal-800 font-serif mb-2">이야기가 올라갔어요</h2>
+          <p className="text-[13px] text-charcoal-400">누군가가 곧 따뜻한 말을 남겨줄 거예요</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-ivory flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 pt-14 pb-4 bg-ivory sticky top-0 z-10">
+    <div className="min-h-screen bg-[#F9F9F9] flex flex-col">
+      <div className="flex items-center gap-3 px-5 pt-14 pb-4 bg-[#F9F9F9] sticky top-0 z-10">
         <button
           onClick={() => router.back()}
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm text-[#888]"
+          className="w-9 h-9 flex items-center justify-center text-charcoal-600"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={20} strokeWidth={2} />
         </button>
-        <h1 className="font-bold text-base text-[#222] flex-1">이야기 올리기</h1>
+        <h1 className="font-bold text-[15px] text-charcoal-800 flex-1">이야기 올리기</h1>
         <button
           onClick={handleSubmit}
           disabled={!intent || !title.trim() || !content.trim()}
-          className={`px-4 py-1.5 rounded-full text-sm font-semibold transition ${
+          className={`px-4 py-1.5 rounded-full text-[13px] font-semibold transition ${
             intent && title.trim() && content.trim()
-              ? 'bg-warm-500 text-white'
-              : 'bg-warm-100 text-warm-300'
+              ? 'bg-charcoal-800 text-white'
+              : 'bg-charcoal-100 text-charcoal-300'
           }`}
         >
           올리기
@@ -70,18 +84,16 @@ export default function WritePage() {
       </div>
 
       <div className="px-5 pb-8 space-y-5 overflow-y-auto">
-        {/* Intent selection */}
         <div>
-          <p className="text-sm font-semibold text-[#222] mb-3">어떤 마음으로 글을 쓰나요?</p>
           <div className="flex gap-2 flex-wrap">
             {INTENTS.map(opt => (
               <button
                 key={opt.value}
                 onClick={() => setIntent(opt.value)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 text-sm font-medium transition ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[13px] font-medium transition ${
                   intent === opt.value
-                    ? 'bg-warm-500 border-warm-500 text-white'
-                    : 'bg-white border-warm-100 text-[#666] hover:border-warm-300'
+                    ? 'bg-charcoal-800 border-charcoal-800 text-white'
+                    : 'bg-white border-charcoal-200 text-charcoal-500 hover:border-charcoal-400'
                 }`}
               >
                 <span>{opt.emoji}</span>
@@ -91,15 +103,14 @@ export default function WritePage() {
           </div>
           {selectedIntent && (
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs text-[#AAA]">카테고리:</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-warm-100 text-warm-500 font-medium">
+              <span className="text-[11px] text-charcoal-300">카테고리:</span>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-charcoal-100 text-charcoal-500 font-medium">
                 {selectedIntent.category}
               </span>
             </div>
           )}
         </div>
 
-        {/* Title */}
         <div>
           <input
             type="text"
@@ -107,60 +118,40 @@ export default function WritePage() {
             onChange={e => setTitle(e.target.value)}
             placeholder="제목을 입력해요"
             maxLength={50}
-            className="w-full bg-white rounded-2xl px-5 py-4 text-[#222] placeholder-[#CCC] text-base font-semibold border-2 border-warm-100 focus:border-warm-400 focus:outline-none transition"
+            className="w-full bg-white rounded-2xl px-5 py-4 text-charcoal-800 placeholder-charcoal-200 text-[15px] font-bold border border-charcoal-100 focus:border-charcoal-400 focus:outline-none transition"
           />
         </div>
 
-        {/* Content */}
         <div>
           <textarea
             value={content}
             onChange={e => setContent(e.target.value)}
             placeholder="지금 느끼는 것들을 자유롭게 써도 괜찮아요. 여기서는 판단하지 않아요."
             rows={8}
-            className="w-full bg-white rounded-2xl px-5 py-4 text-[#222] placeholder-[#CCC] text-sm leading-relaxed border-2 border-warm-100 focus:border-warm-400 focus:outline-none transition resize-none"
+            className="w-full bg-white rounded-2xl px-5 py-4 text-charcoal-700 placeholder-charcoal-200 text-[14px] leading-relaxed border border-charcoal-100 focus:border-charcoal-400 focus:outline-none transition resize-none"
           />
-          <p className="text-right text-xs text-[#CCC] mt-1">{content.length}자</p>
+          <p className="text-right text-[11px] text-charcoal-300 mt-1">{content.length}자</p>
         </div>
 
-        {/* Options */}
-        <div className="bg-white rounded-3xl shadow-card px-5 py-4 space-y-4">
-          <p className="text-sm font-semibold text-[#222] mb-1">옵션</p>
+        <div className="bg-white rounded-2xl border border-charcoal-100 px-5 py-4 space-y-4">
+          <p className="text-[13px] font-semibold text-charcoal-700 mb-1">옵션</p>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-[#444]">위로쪽지 받기</p>
-              <p className="text-xs text-[#AAA]">다른 사람이 쪽지를 보낼 수 있어요</p>
+          {[
+            { label: '위로쪽지 받기', desc: '다른 사람이 쪽지를 보낼 수 있어요', val: allowMessages, set: setAllowMessages },
+            { label: '이별 며칠째 표시', desc: '', val: showDays, set: setShowDays },
+            { label: '성별 표시', desc: '', val: showGender, set: setShowGender },
+            { label: '나이 표시', desc: '', val: showAge, set: setShowAge },
+          ].map(({ label, desc, val, set }) => (
+            <div key={label} className="flex items-center justify-between">
+              <div>
+                <p className="text-[13px] text-charcoal-600">{label}</p>
+                {desc && <p className="text-[11px] text-charcoal-300">{desc}</p>}
+              </div>
+              <button onClick={() => set(v => !v)} className={val ? 'text-charcoal-700' : 'text-charcoal-200'}>
+                {val ? <ToggleRight size={26} /> : <ToggleLeft size={26} />}
+              </button>
             </div>
-            <button onClick={() => setAllowMessages(v => !v)} className="text-warm-400">
-              {allowMessages ? <ToggleRight size={28} /> : <ToggleLeft size={28} className="text-[#DDD]" />}
-            </button>
-          </div>
-
-          <div className="h-px bg-[#F5F5F5]" />
-
-          <p className="text-xs text-[#AAA] font-medium">내 프로필 정보 표시</p>
-
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-[#444]">이별 며칠째 표시</p>
-            <button onClick={() => setShowDays(v => !v)} className="text-warm-400">
-              {showDays ? <ToggleRight size={24} /> : <ToggleLeft size={24} className="text-[#DDD]" />}
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-[#444]">성별 표시</p>
-            <button onClick={() => setShowGender(v => !v)} className="text-warm-400">
-              {showGender ? <ToggleRight size={24} /> : <ToggleLeft size={24} className="text-[#DDD]" />}
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-[#444]">나이 표시</p>
-            <button onClick={() => setShowAge(v => !v)} className="text-warm-400">
-              {showAge ? <ToggleRight size={24} /> : <ToggleLeft size={24} className="text-[#DDD]" />}
-            </button>
-          </div>
+          ))}
         </div>
       </div>
     </div>

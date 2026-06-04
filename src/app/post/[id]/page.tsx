@@ -1,237 +1,195 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, User, MoreHorizontal, Send } from 'lucide-react'
-import { POSTS, USERS, COMMENTS, CATEGORY_COLORS, getPostActions } from '@/lib/data'
-import ProfileSheet from '@/components/features/ProfileSheet'
+import { ChevronLeft, MoreHorizontal, User, Heart, Send } from 'lucide-react'
+import { getPost, getComments, likePost, addComment, likeComment, DbPost, DbComment } from '@/lib/db'
+import { getPostDetailActions } from '@/lib/data'
 
-const CHAT_STATUS_DOT: Record<string, string> = {
-  '지금 대화 가능': 'bg-emerald-400',
-  '천천히 답장': 'bg-yellow-400',
-  '쪽지 안 받아요': 'bg-gray-300',
+function timeAgoLabel(ts: any): string {
+  if (!ts) return '방금 전'
+  const diff = Date.now() - ts.toMillis()
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return '방금 전'
+  if (m < 60) return `${m}분 전`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}시간 전`
+  return `${Math.floor(h / 24)}일 전`
 }
 
 export default function PostDetailPage() {
   const params = useParams()
   const router = useRouter()
   const postId = params.id as string
-  const post = POSTS.find(p => p.id === postId)
-  const author = post ? USERS[post.authorId] : null
-  const comments = COMMENTS.filter(c => c.postId === postId)
-  const actions = post ? getPostActions(post.category) : []
 
+  const [post, setPost] = useState<DbPost | null>(null)
+  const [comments, setComments] = useState<DbComment[]>([])
+  const [loading, setLoading] = useState(true)
   const [comment, setComment] = useState('')
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [empathyTapped, setEmpathyTapped] = useState(false)
+  const [tapped, setTapped] = useState<Record<number, boolean>>({})
+  const [submitting, setSubmitting] = useState(false)
 
-  if (!post || !author) {
-    return (
-      <div className="min-h-screen bg-ivory flex items-center justify-center">
-        <p className="text-[#AAA] text-sm">글을 찾을 수 없어요</p>
-      </div>
-    )
+  const profile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('wecando_profile') || 'null') : null
+
+  useEffect(() => {
+    Promise.all([getPost(postId), getComments(postId)]).then(([p, c]) => {
+      setPost(p)
+      setComments(c)
+      setLoading(false)
+    })
+  }, [postId])
+
+  const handleLike = async (i: number) => {
+    if (tapped[i]) return
+    setTapped(t => ({ ...t, [i]: true }))
+    await likePost(postId)
+    setPost(p => p ? { ...p, likeCount: p.likeCount + 1 } : p)
   }
 
-  const handleSendComment = () => {
-    if (!comment.trim()) return
+  const handleComment = async () => {
+    if (!comment.trim() || submitting || !profile) return
+    setSubmitting(true)
+    await addComment({
+      postId,
+      authorId: profile.id || 'anon',
+      authorNickname: profile.nickname,
+      authorLocation: '',
+      authorDays: profile.daysSinceBreakup,
+      content: comment.trim(),
+    })
+    const updated = await getComments(postId)
+    setComments(updated)
+    setPost(p => p ? { ...p, commentCount: p.commentCount + 1 } : p)
     setComment('')
+    setSubmitting(false)
   }
+
+  if (loading) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-charcoal-200 border-t-charcoal-600 rounded-full animate-spin" />
+    </div>
+  )
+
+  if (!post) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <p className="text-charcoal-300 text-sm">글을 찾을 수 없어요</p>
+    </div>
+  )
+
+  const actions = getPostDetailActions(post.category as any)
 
   return (
-    <div className="min-h-screen bg-ivory flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 pt-14 pb-4 bg-ivory sticky top-0 z-10">
-        <button
-          onClick={() => router.back()}
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm text-[#888]"
-        >
-          <ChevronLeft size={18} />
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="flex items-center justify-between px-4 pt-14 pb-3 bg-white sticky top-0 z-10 border-b border-charcoal-50">
+        <button onClick={() => router.back()} className="w-9 h-9 flex items-center justify-center text-charcoal-700">
+          <ChevronLeft size={22} strokeWidth={2} />
         </button>
-        <h1 className="font-bold text-sm text-[#222] flex-1 truncate">{post.category}</h1>
-        <button className="w-9 h-9 flex items-center justify-center text-[#CCC]">
-          <MoreHorizontal size={18} />
+        <button className="w-9 h-9 flex items-center justify-center text-charcoal-400">
+          <MoreHorizontal size={20} />
         </button>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto pb-40">
-        {/* Post */}
-        <div className="mx-4 mb-4">
-          <div className="bg-white rounded-3xl shadow-card px-5 py-5">
-            {/* Author */}
-            <button
-              className="flex items-center gap-3 mb-4 w-full text-left"
-              onClick={() => setProfileOpen(true)}
-            >
-              <div className="w-11 h-11 rounded-full bg-warm-50 flex items-center justify-center flex-shrink-0">
-                <User size={20} className="text-warm-300" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-[#222]">{author.nickname}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-warm-100 text-warm-500 font-medium">
-                    이별 {author.daysSinceBreakup}일째
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 mt-0.5">
-                  {post.location && <span className="text-xs text-[#AAA]">{post.location}</span>}
-                  <span className="text-xs text-[#AAA]">·</span>
-                  <span className="text-xs text-[#AAA]">{post.timeAgo}</span>
-                  {author.chatStatus !== '쪽지 안 받아요' && (
-                    <>
-                      <span className="text-xs text-[#AAA]">·</span>
-                      <span className={`w-1.5 h-1.5 rounded-full ${CHAT_STATUS_DOT[author.chatStatus]}`} />
-                      <span className={`text-xs font-medium ${author.chatStatus === '지금 대화 가능' ? 'text-emerald-600' : 'text-yellow-600'}`}>
-                        {author.chatStatus}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </button>
-
-            {/* Category */}
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium inline-block mb-3 ${CATEGORY_COLORS[post.category] || 'bg-warm-100 text-warm-500'}`}>
-              {post.category}
-            </span>
-
-            {/* Content */}
-            <h2 className="font-bold text-[#222] text-lg mb-3 leading-snug">{post.title}</h2>
-            <p className="text-[#555] text-sm leading-relaxed">{post.content}</p>
-
-            {/* Divider */}
-            <div className="h-px bg-[#F5F5F5] my-4" />
-
-            {/* Actions */}
-            <div className="flex items-center gap-0">
-              {actions.map((action, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    if (action.type === 'message' || action.type === 'primary') {
-                      router.push(`/chat/${author.id}`)
-                    } else if (action.type === 'empathy') {
-                      setEmpathyTapped(v => !v)
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 text-xs flex-1 justify-center py-2 rounded-xl transition ${
-                    action.type === 'primary'
-                      ? 'text-warm-500 font-semibold hover:bg-warm-50'
-                      : action.type === 'message'
-                      ? 'text-warm-400 font-medium hover:bg-warm-50'
-                      : action.type === 'empathy' && empathyTapped
-                      ? 'text-warm-500 font-semibold'
-                      : 'text-[#888] hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-sm">{action.emoji}</span>
-                  <span>{action.label}</span>
-                  {action.count > 0 && (
-                    <span className="text-[#AAA] font-medium">
-                      {action.type === 'empathy' && empathyTapped ? action.count + 1 : action.count}
-                    </span>
-                  )}
-                </button>
-              ))}
+      <div className="flex-1 overflow-y-auto pb-24">
+        <div className="px-5 pt-5 pb-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-11 h-11 rounded-full bg-charcoal-100 flex items-center justify-center flex-shrink-0">
+              <User size={20} className="text-charcoal-300" />
             </div>
+            <div className="flex-1">
+              <p className="font-bold text-[14px] text-charcoal-800">{post.authorNickname}</p>
+              <p className="text-[12px] text-charcoal-400 mt-0.5">
+                {post.authorLocation && `${post.authorLocation} · `}{post.authorStatus} · 이별 {post.authorDays}일차
+              </p>
+            </div>
+            <span className="text-[12px] text-charcoal-300">{post.timeAgo}</span>
+          </div>
+
+          <h2 className="font-bold text-[20px] text-charcoal-800 leading-snug mb-3 font-serif">{post.title}</h2>
+          <p className="text-[14px] text-charcoal-600 leading-relaxed whitespace-pre-line">{post.content}</p>
+
+          <div className="flex gap-2 mt-5">
+            {actions.map((action, i) => (
+              <button
+                key={i}
+                onClick={() => handleLike(i)}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-3 rounded-2xl border transition ${
+                  tapped[i] ? 'border-charcoal-800 bg-charcoal-800 text-white' : 'border-charcoal-100 bg-white text-charcoal-500 hover:border-charcoal-300'
+                }`}
+              >
+                <span className={`text-[11px] font-medium ${tapped[i] ? 'text-white' : 'text-charcoal-400'}`}>{action.label}</span>
+                <span className={`text-[16px] font-bold font-serif ${tapped[i] ? 'text-white' : 'text-charcoal-800'}`}>
+                  {tapped[i] ? action.count + 1 : action.count}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Comments section */}
-        <div className="px-4 mb-4">
-          <p className="text-sm font-semibold text-[#222] mb-3">
-            댓글 {comments.length}개
-          </p>
+        <div className="h-2 bg-charcoal-50" />
+
+        <div className="px-5 pt-4">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[14px] font-bold text-charcoal-800">댓글 {post.commentCount}</span>
+            <span className="text-[12px] text-charcoal-400">최신순 ▾</span>
+          </div>
 
           {comments.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-[#CCC] text-sm">아직 댓글이 없어요</p>
-              <p className="text-[#DDD] text-xs mt-1">따뜻한 말을 남겨주세요</p>
+            <div className="text-center py-12">
+              <p className="text-charcoal-200 text-sm">아직 댓글이 없어요</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {comments.map(c => {
-                const commenter = USERS[c.authorId]
-                if (!commenter) return null
-                return (
-                  <div key={c.id} className="bg-white rounded-3xl shadow-card px-5 py-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-full bg-warm-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <User size={15} className="text-warm-300" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="font-semibold text-xs text-[#222]">{commenter.nickname}</span>
-                          <span className="text-xs text-warm-400 font-medium">이별 {commenter.daysSinceBreakup}일째</span>
-                          {c.reaction && (
-                            <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-warm-50 text-warm-500 font-medium">
-                              {c.reaction}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-[#555] leading-relaxed">{c.content}</p>
-                        <p className="text-xs text-[#CCC] mt-1.5">{c.timeAgo}</p>
-                      </div>
+            <div className="space-y-5">
+              {comments.map((c: any) => (
+                <div key={c.id} className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-charcoal-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <User size={15} className="text-charcoal-300" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="font-bold text-[13px] text-charcoal-800">{c.authorNickname}</span>
+                      {c.authorLocation && <span className="text-[11px] text-charcoal-300">{c.authorLocation}</span>}
+                      <span className="text-[11px] text-charcoal-300">이별 {c.authorDays}일차</span>
+                      <span className="ml-auto text-[11px] text-charcoal-200">{timeAgoLabel(c.createdAt)}</span>
+                    </div>
+                    <p className="text-[13px] text-charcoal-600 leading-relaxed mb-2">{c.content}</p>
+                    <div className="flex items-center gap-3 text-[12px] text-charcoal-300">
+                      <button className="flex items-center gap-1 hover:text-rose-400 transition">
+                        <Heart size={12} strokeWidth={1.8} /> {c.likeCount ?? 0}
+                      </button>
+                      <button>답글</button>
+                      <button>신고</button>
                     </div>
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* Bottom action bar */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] bg-white shadow-nav border-t border-[#F0F0F0] px-4 py-3 z-40">
-        <div className="flex items-center gap-2 mb-3">
-          <button
-            onClick={() => setEmpathyTapped(v => !v)}
-            className={`flex-1 py-2.5 rounded-full text-xs font-semibold border-2 transition ${
-              empathyTapped
-                ? 'bg-warm-400 border-warm-400 text-white'
-                : 'border-warm-200 text-warm-500 hover:bg-warm-50'
-            }`}
-          >
-            {empathyTapped ? '공감했어요 ✓' : '공감해요'}
-          </button>
-          {post.allowMessages && (
-            <button
-              onClick={() => router.push(`/chat/${author.id}`)}
-              className="flex-1 py-2.5 rounded-full text-xs font-semibold bg-warm-500 text-white hover:bg-warm-600 transition"
-            >
-              위로쪽지 보내기
-            </button>
-          )}
-        </div>
-
-        {/* Comment input */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] bg-white border-t border-charcoal-100 px-4 py-3 z-40">
         <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-charcoal-100 flex items-center justify-center flex-shrink-0">
+            <User size={14} className="text-charcoal-300" />
+          </div>
           <input
             type="text"
             value={comment}
             onChange={e => setComment(e.target.value)}
-            placeholder="따뜻한 말을 남겨주세요"
-            className="flex-1 bg-warm-50 rounded-full px-4 py-2.5 text-sm text-[#222] placeholder-[#CCC] outline-none"
-            onKeyDown={e => { if (e.key === 'Enter') handleSendComment() }}
+            placeholder="따뜻한 댓글을 남겨주세요..."
+            className="flex-1 text-[13px] text-charcoal-800 placeholder-charcoal-200 outline-none"
+            onKeyDown={e => { if (e.key === 'Enter') handleComment() }}
           />
           <button
-            onClick={handleSendComment}
-            disabled={!comment.trim()}
-            className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition ${
-              comment.trim() ? 'bg-warm-500 text-white' : 'bg-warm-100 text-warm-300'
+            onClick={handleComment}
+            disabled={!comment.trim() || submitting}
+            className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition ${
+              comment.trim() ? 'bg-charcoal-800 text-white' : 'bg-charcoal-100 text-charcoal-300'
             }`}
           >
-            <Send size={16} />
+            <Send size={14} />
           </button>
         </div>
       </div>
-
-      {/* Profile sheet */}
-      <ProfileSheet
-        userId={author.id}
-        isOpen={profileOpen}
-        onClose={() => setProfileOpen(false)}
-      />
     </div>
   )
 }
