@@ -5,13 +5,7 @@ import { ChevronRight, Edit3 } from 'lucide-react'
 import { UserProfile, ChatStatus, UserStatus } from '@/lib/types'
 
 const CHAT_STATUS_OPTS: ChatStatus[] = ['지금 대화 가능', '천천히 답장', '쪽지 안 받아요']
-const STATUS_OPTS: UserStatus[] = ['이별했어요', '연락참기', '재회고민', '위로받기', '대화친구']
-
-const CHAT_STATUS_DOT: Record<string, string> = {
-  '지금 대화 가능': 'bg-emerald-400',
-  '천천히 답장': 'bg-yellow-400',
-  '쪽지 안 받아요': 'bg-gray-300',
-}
+const STATUS_OPTS: UserStatus[] = ['차였음', '이별함', '연락참는중', '재회기다림', '환승함', '자유']
 
 export default function MyPage() {
   const router = useRouter()
@@ -20,9 +14,7 @@ export default function MyPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem('wecando_profile')
-    if (stored) {
-      setProfile(JSON.parse(stored))
-    }
+    if (stored) setProfile(JSON.parse(stored))
   }, [])
 
   const updateProfile = (updates: Partial<UserProfile>) => {
@@ -40,108 +32,96 @@ export default function MyPage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-ivory flex items-center justify-center">
-        <p className="text-[#AAA] text-sm">불러오는 중...</p>
+      <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center">
+        <p className="text-charcoal-300 text-[13px]">불러오는 중...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-ivory">
-      {/* Header */}
+    <div className="min-h-screen bg-[#F9F9F9]">
       <div className="px-5 pt-14 pb-6">
-        <h1 className="text-xl font-bold text-[#222]">마이</h1>
+        <h1 className="text-[20px] font-bold text-charcoal-800 font-serif">마이페이지</h1>
       </div>
 
       {/* Profile card */}
-      <div className="mx-4 mb-5">
-        <div className="bg-white rounded-3xl shadow-card px-6 py-6">
+      <div className="mx-4 mb-4">
+        <div className="bg-white rounded-2xl border border-charcoal-100 px-6 py-5">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-warm-100 flex items-center justify-center text-2xl">
-              🌸
+            <div className="w-14 h-14 rounded-full bg-charcoal-100 flex items-center justify-center text-xl">
+              🌙
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-[#222]">{profile.nickname}</h2>
+                <h2 className="text-[17px] font-bold text-charcoal-800 font-serif">{profile.nickname}</h2>
                 <button
                   onClick={() => setEditing('nickname')}
-                  className="w-6 h-6 flex items-center justify-center rounded-full bg-warm-50 text-warm-400"
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-charcoal-100 text-charcoal-400"
                 >
-                  <Edit3 size={12} />
+                  <Edit3 size={11} />
                 </button>
               </div>
               <div className="flex items-center gap-1.5 mt-1">
-                {profile.showGender && <span className="text-sm text-[#888]">{profile.gender}</span>}
+                {profile.showGender && <span className="text-[12px] text-charcoal-400">{profile.gender}</span>}
                 {profile.showAge && profile.age !== '비공개' && (
                   <>
-                    <span className="text-[#DDD]">·</span>
-                    <span className="text-sm text-[#888]">{profile.age}세</span>
+                    <span className="text-charcoal-200">·</span>
+                    <span className="text-[12px] text-charcoal-400">{profile.age}세</span>
                   </>
                 )}
-                <span className="text-[#DDD]">·</span>
-                <span className="text-sm text-warm-500 font-medium">이별 {profile.daysSinceBreakup}일째</span>
+                <span className="text-charcoal-200">·</span>
+                <span className="text-[12px] text-charcoal-600 font-medium">이별 {profile.daysSinceBreakup}일째</span>
               </div>
             </div>
           </div>
 
-          {/* Status */}
-          <div className="flex items-center justify-between py-3 border-t border-[#F5F5F5]">
-            <span className="text-sm text-[#666]">현재 상태</span>
-            <span className="text-sm font-semibold text-warm-500">{profile.status}</span>
+          <div className="flex items-center justify-between py-3 border-t border-charcoal-50">
+            <span className="text-[13px] text-charcoal-400">현재 상태</span>
+            <span className="text-[13px] font-semibold text-charcoal-700">{profile.status}</span>
           </div>
 
-          {/* Chat status */}
-          <div className="flex items-center justify-between py-3 border-t border-[#F5F5F5]">
-            <span className="text-sm text-[#666]">대화 가능 여부</span>
-            <div className="flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full ${CHAT_STATUS_DOT[profile.chatStatus]}`} />
-              <span className="text-sm font-medium text-[#444]">{profile.chatStatus}</span>
-            </div>
+          <div className="flex items-center justify-between py-3 border-t border-charcoal-50">
+            <span className="text-[13px] text-charcoal-400">대화 가능 여부</span>
+            <span className="text-[13px] font-medium text-charcoal-600">{profile.chatStatus}</span>
           </div>
         </div>
       </div>
 
-      {/* Edit sections */}
       <div className="mx-4 space-y-3 mb-5">
-        {/* Nickname edit */}
         {editing === 'nickname' && (
-          <div className="bg-white rounded-3xl shadow-card px-5 py-4">
-            <p className="text-sm font-semibold text-[#222] mb-3">닉네임 변경</p>
+          <div className="bg-white rounded-2xl border border-charcoal-100 px-5 py-4">
+            <p className="text-[13px] font-semibold text-charcoal-700 mb-3">닉네임 변경</p>
             <input
               type="text"
               defaultValue={profile.nickname}
               maxLength={12}
-              className="w-full border-2 border-warm-100 focus:border-warm-400 rounded-2xl px-4 py-3 text-sm outline-none transition"
-              onKeyDown={e => {
-                if (e.key === 'Enter') updateProfile({ nickname: (e.target as HTMLInputElement).value })
-              }}
+              className="w-full border border-charcoal-200 focus:border-charcoal-500 rounded-xl px-4 py-3 text-[13px] text-charcoal-800 outline-none transition"
               autoFocus
             />
             <div className="flex gap-2 mt-3">
-              <button onClick={() => setEditing(null)} className="flex-1 py-2 rounded-full border border-[#EEE] text-sm text-[#888]">취소</button>
+              <button onClick={() => setEditing(null)} className="flex-1 py-2 rounded-full border border-charcoal-200 text-[13px] text-charcoal-400">취소</button>
               <button
                 onClick={e => {
                   const inp = (e.currentTarget.closest('.bg-white') as HTMLElement)?.querySelector('input') as HTMLInputElement
                   if (inp) updateProfile({ nickname: inp.value })
                 }}
-                className="flex-1 py-2 rounded-full bg-warm-500 text-white text-sm font-medium"
+                className="flex-1 py-2 rounded-full bg-charcoal-800 text-white text-[13px] font-medium"
               >저장</button>
             </div>
           </div>
         )}
 
-        {/* Status change */}
-        <div className="bg-white rounded-3xl shadow-card px-5 py-4">
-          <p className="text-sm font-semibold text-[#222] mb-3">현재 상태 변경</p>
+        <div className="bg-white rounded-2xl border border-charcoal-100 px-5 py-4">
+          <p className="text-[13px] font-semibold text-charcoal-700 mb-3">현재 상태</p>
           <div className="flex flex-wrap gap-2">
             {STATUS_OPTS.map(s => (
               <button
                 key={s}
                 onClick={() => updateProfile({ status: s })}
-                className={`px-3 py-1.5 rounded-full border text-xs font-medium transition ${
+                className={`px-3 py-1.5 rounded-full border text-[12px] font-medium transition ${
                   profile.status === s
-                    ? 'bg-warm-500 border-warm-500 text-white'
-                    : 'bg-white border-warm-100 text-[#666] hover:border-warm-300'
+                    ? 'bg-charcoal-800 border-charcoal-800 text-white'
+                    : 'bg-white border-charcoal-200 text-charcoal-500 hover:border-charcoal-400'
                 }`}
               >
                 {s}
@@ -150,45 +130,46 @@ export default function MyPage() {
           </div>
         </div>
 
-        {/* Chat status change */}
-        <div className="bg-white rounded-3xl shadow-card px-5 py-4">
-          <p className="text-sm font-semibold text-[#222] mb-3">대화 가능 여부</p>
+        <div className="bg-white rounded-2xl border border-charcoal-100 px-5 py-4">
+          <p className="text-[13px] font-semibold text-charcoal-700 mb-3">대화 가능 여부</p>
           <div className="space-y-2">
             {CHAT_STATUS_OPTS.map(s => (
               <button
                 key={s}
                 onClick={() => updateProfile({ chatStatus: s, allowMessages: s !== '쪽지 안 받아요' })}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 text-left transition ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition ${
                   profile.chatStatus === s
-                    ? 'border-warm-400 bg-warm-50'
-                    : 'border-warm-100 bg-white hover:border-warm-200'
+                    ? 'border-charcoal-700 bg-charcoal-800 text-white'
+                    : 'border-charcoal-100 bg-white hover:border-charcoal-300 text-charcoal-600'
                 }`}
               >
-                <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${CHAT_STATUS_DOT[s]}`} />
-                <span className={`text-sm font-medium ${profile.chatStatus === s ? 'text-warm-600' : 'text-[#555]'}`}>{s}</span>
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                  s === '지금 대화 가능' ? 'bg-charcoal-400' :
+                  s === '천천히 답장' ? 'bg-charcoal-300' : 'bg-charcoal-200'
+                } ${profile.chatStatus === s ? 'bg-white' : ''}`} />
+                <span className="text-[13px] font-medium">{s}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Privacy */}
-        <div className="bg-white rounded-3xl shadow-card px-5 py-4">
-          <p className="text-sm font-semibold text-[#222] mb-3">공개 설정</p>
+        <div className="bg-white rounded-2xl border border-charcoal-100 px-5 py-4">
+          <p className="text-[13px] font-semibold text-charcoal-700 mb-3">공개 설정</p>
           <div className="space-y-3">
             {[
               { label: '성별 공개', key: 'showGender' as keyof UserProfile },
               { label: '나이 공개', key: 'showAge' as keyof UserProfile },
             ].map(item => (
               <div key={item.key} className="flex items-center justify-between">
-                <span className="text-sm text-[#555]">{item.label}</span>
+                <span className="text-[13px] text-charcoal-500">{item.label}</span>
                 <button
                   onClick={() => updateProfile({ [item.key]: !profile[item.key] } as Partial<UserProfile>)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${
-                    profile[item.key] ? 'bg-warm-400' : 'bg-[#DDD]'
+                  className={`w-11 h-6 rounded-full transition-colors relative ${
+                    profile[item.key] ? 'bg-charcoal-800' : 'bg-charcoal-200'
                   }`}
                 >
                   <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                    profile[item.key] ? 'left-7' : 'left-1'
+                    profile[item.key] ? 'left-6' : 'left-1'
                   }`} />
                 </button>
               </div>
@@ -197,21 +178,20 @@ export default function MyPage() {
         </div>
       </div>
 
-      {/* Actions */}
       <div className="mx-4 space-y-2 mb-8">
         <button
           onClick={() => setEditing(editing === 'nickname' ? null : 'nickname')}
-          className="w-full flex items-center justify-between px-5 py-4 bg-white rounded-2xl shadow-card text-sm text-[#444]"
+          className="w-full flex items-center justify-between px-5 py-4 bg-white rounded-2xl border border-charcoal-100 text-[13px] text-charcoal-600"
         >
           <span>닉네임 수정</span>
-          <ChevronRight size={16} className="text-[#CCC]" />
+          <ChevronRight size={15} className="text-charcoal-300" />
         </button>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-between px-5 py-4 bg-white rounded-2xl shadow-card text-sm text-rose-400"
+          className="w-full flex items-center justify-between px-5 py-4 bg-white rounded-2xl border border-charcoal-100 text-[13px] text-charcoal-400"
         >
           <span>처음으로 돌아가기</span>
-          <ChevronRight size={16} className="text-rose-300" />
+          <ChevronRight size={15} className="text-charcoal-200" />
         </button>
       </div>
     </div>

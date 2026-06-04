@@ -1,17 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg: #FAF7F3;
+  --bg: #F9F9F9;
   --card: #FFFFFF;
-  --accent: #B07B5B;
-  --accent-light: #F5EDE8;
-  --text-primary: #222222;
-  --text-secondary: #888888;
-  --text-muted: #AAAAAA;
+  --accent: #111111;
+  --accent-light: #F0F0F0;
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-muted: #999999;
 }
 
 * {
@@ -22,50 +22,31 @@ body {
   background-color: var(--bg);
   color: var(--text-primary);
   font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
 
-/* Scrollbar hide */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.font-serif {
+  font-family: 'Nanum Myeongjo', Georgia, serif;
+  letter-spacing: -0.01em;
 }
 
-/* Bottom sheet animation */
-.sheet-enter {
-  animation: sheetUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-}
-.sheet-exit {
-  animation: sheetDown 0.25s ease-in forwards;
-}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-@keyframes sheetUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-@keyframes sheetDown {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
-}
+.sheet-enter { animation: sheetUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+.sheet-exit  { animation: sheetDown 0.25s ease-in forwards; }
 
-/* Fade in */
-.fade-in {
-  animation: fadeIn 0.4s ease forwards;
-}
+@keyframes sheetUp   { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+
+.fade-in { animation: fadeIn 0.4s ease forwards; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Chat bubble */
-.bubble-mine {
-  border-radius: 20px 20px 4px 20px;
-}
-.bubble-other {
-  border-radius: 20px 20px 20px 4px;
-}
+.bubble-mine  { border-radius: 20px 20px 4px 20px; }
+.bubble-other { border-radius: 20px 20px 20px 4px; }

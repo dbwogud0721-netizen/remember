@@ -16,7 +16,7 @@ export default function RootPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="text-warm-400 text-sm animate-pulse">잠깐만요...</div>
+      <div className="text-charcoal-400 text-sm animate-pulse font-serif">잠깐만요...</div>
     </div>
   )
 }
