@@ -1,6 +1,6 @@
 'use client'
 export const dynamic = 'force-dynamic'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Bell, PenLine } from 'lucide-react'
 import { Category } from '@/lib/types'
@@ -70,12 +70,29 @@ export default function HomePage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
 
-  useEffect(() => {
-    const interval = setInterval(() => {
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const resetInterval = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    intervalRef.current = setInterval(() => {
       setBannerIdx(prev => (prev + 1) % introLines.length)
     }, 10000)
-    return () => clearInterval(interval)
+  }
+
+  useEffect(() => {
+    resetInterval()
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [])
+
+  const goPrev = () => {
+    setBannerIdx(prev => (prev - 1 + introLines.length) % introLines.length)
+    resetInterval()
+  }
+
+  const goNext = () => {
+    setBannerIdx(prev => (prev + 1) % introLines.length)
+    resetInterval()
+  }
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
@@ -128,6 +145,8 @@ export default function HomePage() {
             style={{ backgroundImage: 'url(/새벽이미지1.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
             <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 100%)' }} />
+            <button onClick={goPrev} className="absolute left-0 top-0 h-full w-1/3 z-10" aria-label="이전" />
+            <button onClick={goNext} className="absolute right-0 top-0 h-full w-1/3 z-10" aria-label="다음" />
             <h2 className="relative text-white text-[22px] font-bold leading-tight whitespace-pre-line mb-2 font-serif">
               {introLines[bannerIdx].title}
             </h2>
