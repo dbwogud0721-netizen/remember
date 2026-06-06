@@ -125,9 +125,9 @@ export default function HomePage() {
         {activeCategory === '전체' && (
           <div
             className="relative rounded-3xl overflow-hidden h-[190px] flex flex-col justify-end px-6 pb-5 pt-8 mb-4"
-            style={{ background: 'radial-gradient(ellipse at 70% 100%, #1c2d3a 0%, #0d1820 40%, #050d13 100%)' }}
+            style={{ backgroundImage: 'url(/새벽이미지 1.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 30% 80%, rgba(60,80,100,0.25) 0%, transparent 60%)' }} />
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 100%)' }} />
             <h2 className="relative text-white text-[22px] font-bold leading-tight whitespace-pre-line mb-2 font-serif">
               {introLines[bannerIdx].title}
             </h2>
