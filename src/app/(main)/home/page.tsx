@@ -42,14 +42,14 @@ export default function HomePage() {
       {/* Header */}
       <div className="px-5 pt-14 pb-3 bg-white sticky top-0 z-30">
         <div className="flex items-center justify-between mb-0.5">
-          <h1 className="text-[22px] font-bold text-charcoal-800 tracking-tight font-serif">후폭풍</h1>
+          <h1 className="text-[22px] font-bold text-charcoal-800 tracking-tight font-serif">속마음 이야기</h1>
           <button className="w-9 h-9 flex items-center justify-center text-charcoal-500 relative">
             <Bell size={20} strokeWidth={1.8} />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-400 border-2 border-white" />
           </button>
         </div>
         <p className="text-[12px] text-charcoal-400 mb-4 leading-snug">
-          친구한테는 그만 말하라는 이야기, 여기서는 계속 해도 됩니다.
+          친구에게 차마 하지 못하는 말 여기서 해요
         </p>
         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
           {CATEGORIES.map(cat => (

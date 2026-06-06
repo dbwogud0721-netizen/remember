@@ -1,13 +1,13 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, LayoutGrid, Moon, Flame, User } from 'lucide-react'
+import { Home, LayoutGrid, Moon, Mail, User } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/home', icon: Home, label: '홈' },
   { href: '/category', icon: LayoutGrid, label: '카테고리' },
   { href: '/consolation', icon: Moon, label: '새벽게시판' },
-  { href: '/messages', icon: Flame, label: '인기글' },
+  { href: '/messages', icon: Mail, label: '쪽지' },
   { href: '/my', icon: User, label: '마이페이지' },
 ]
 
